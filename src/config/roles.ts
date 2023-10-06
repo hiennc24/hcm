@@ -1,25 +1,7 @@
 const allRoles = {
-  customer: [],
   user: [],
-  admin: [
-    'getUsers',
-    'manageUsers',
-    'getCustomerCategories',
-    'manageCustomerCategories',
-    'getRegions',
-    'manageRegions',
-    'getSpecialists',
-    'manageSpecialists',
-    'getServices',
-    'manageServices',
-    'getCustomers',
-  ],
+  admin: ['getUsers', 'manageUsers'],
 };
 
-const roles = Object.keys(allRoles);
-const roleRights = new Map(Object.entries(allRoles));
-
-export default {
-  roles,
-  roleRights,
-};
+export const roles = Object.keys(allRoles);
+export const roleRights = new Map(Object.entries(allRoles));

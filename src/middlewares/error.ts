@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 import httpStatus from 'http-status';
-import config from '../config/config';
 import logger from '../config/logger';
 import ApiError from '../utils/ApiError';
+import { config } from '../config';
 
-export const errorConverter = (err, req, res, next) => {
+export const errorConverter = (err: any, req: any, res: any, next: (arg0: any) => void) => {
   let error = err;
   if (!(error instanceof ApiError)) {
     const statusCode =
-      error.statusCode || error instanceof mongoose.Error ? httpStatus.BAD_REQUEST : httpStatus.INTERNAL_SERVER_ERROR;
+      error.statusCode || error instanceof mongoose.MongooseError ? httpStatus.BAD_REQUEST : httpStatus.INTERNAL_SERVER_ERROR;
     const message = error.message || httpStatus[statusCode];
     error = new ApiError(statusCode, message, false, err.stack);
   }
@@ -16,12 +16,12 @@ export const errorConverter = (err, req, res, next) => {
 };
 
 // eslint-disable-next-line no-unused-vars
-export const errorHandler = (err, req, res, next) => {
-  let { statusCode, message } = err;
-  if (config.env === 'production' && !err.isOperational) {
-    statusCode = httpStatus.INTERNAL_SERVER_ERROR;
-    message = httpStatus[httpStatus.INTERNAL_SERVER_ERROR];
-  }
+export const errorHandler = (err: any, req: any, res: any, next: (arg0: any) => void) => {
+  const { statusCode, message } = err;
+  // if (config.env === 'production' && !err.isOperational) {
+  //   statusCode = httpStatus.INTERNAL_SERVER_ERROR;
+  //   message = httpStatus[httpStatus.INTERNAL_SERVER_ERROR];
+  // }
 
   res.locals.errorMessage = err.message;
 
@@ -32,7 +32,7 @@ export const errorHandler = (err, req, res, next) => {
   };
 
   if (config.env === 'development') {
-    console.debug(err);
+    logger.error(err);
   }
 
   res.status(statusCode).send(response);

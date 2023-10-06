@@ -1,0 +1,1 @@
+apt get lương khởi điểm / lương tối thiểu vùng

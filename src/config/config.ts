@@ -9,7 +9,6 @@ const envVarsSchema = Joi.object()
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(3000),
     MONGODB_URL: Joi.string().required().description('Mongo DB url'),
-    PRIVATE_KEY: Joi.string().required().description('PRIVATE_KEY'),
     JWT_SECRET: Joi.string().required().description('JWT secret key'),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
     JWT_REFRESH_EXPIRATION_DAYS: Joi.number().default(30).description('days after which refresh tokens expire'),
@@ -33,19 +32,30 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
-export default {
+export const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
+  redis:
+    envVars.NODE_ENV === 'production'
+      ? `redis://:${envVars.REDIS_PASSWORD}@${envVars.REDIS_HOST || '127.0.0.1'}:${envVars.REDIS_PORT || 6379}`
+      : // ? {
+        //   redis: {
+        //     port: envVars.REDIS_PORT || 6379,
+        //     host: envVars.REDIS_HOST || '127.0.0.1',
+        //     password: envVars.REDIS_PASSWORD || ''
+        //   }
+        // }
+        `redis://${envVars.REDIS_HOST || '127.0.0.1'}:${envVars.REDIS_PORT || 6379}`,
+  token_secret: envVars.JWT_TOKEN_SECRET,
   mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {
-      autoIndex: true,
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
+      useCreateIndex: true,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     },
   },
   jwt: {
-    privateKey: envVars.PRIVATE_KEY,
     secret: envVars.JWT_SECRET,
     accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
     refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
@@ -63,4 +73,5 @@ export default {
     },
     from: envVars.EMAIL_FROM,
   },
+  chatAccountMaxLength: 50,
 };

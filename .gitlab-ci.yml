@@ -1,0 +1,19 @@
+stages:
+  - deploy
+bisocore_api:
+  stage: deploy
+  tags:
+    - bisocore_api
+  only:
+    - deploy/test
+  script:
+    - cp -r -u * /srv/abizin/core_api
+    - cp /srv/abizin/core_api/.env.production /srv/abizin/core_api/.env
+    - cd /srv/abizin/core_api
+    - npm i --legacy-peer-deps
+    # - yarn start
+    - pm2 list
+    # - pm2 start build/src/index.js --name bisocore_api
+    - npm run tsc
+    - cp /srv/abizin/core_api/.env.production /srv/abizin/core_api/build/.env
+    - pm2 restart bisocore_api

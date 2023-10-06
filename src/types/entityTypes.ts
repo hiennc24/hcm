@@ -1,167 +1,529 @@
-import mongoose from 'mongoose';
-import { AUDITLOG_LEVELS, AUDITLOG_TYPES, PERMISSIONS, SYSTEMFOLDER_TYPES } from './enumTypes';
-import { PFieldType } from './fieldTypes';
+import * as mongoose from 'mongoose';
+import { LOCATION_TYPES, NATUE_OF_COST_TYPES, PROCESS_TYPES, RCP_TYPES, TARGET_FORMULA_ALLOWANCE } from '.';
+import { IPersonnelPositionDoc } from './commonEntityTypes';
+import {
+  BASE_FACTOR_TYPES, BASIC_SALARY_TYPES, HASHTAG_TYPES, BSC_ENTIRY_ON_MODEL,
+  IS_PUBLIC, MANDATE_KEY, ORGANIZATIONAL_MODAL, SALARY_GRADE_TYPES, MONTH_KEY, SPLITUP_ON_MODEL, TYPES_OF_LABEL, TABLE_CORE_BSC_TARGETDETAIL_MANAGEBY
+} from './enumTypes';
+
+export interface IModel<T> extends mongoose.Model<T> {
+  createdById: any,
+  createdAt: Date,
+  deletedById?: any,
+  deletedAt?: Date,
+  updatedAt?: Date,
+
+  toJSON: any
+  paginate: any,
+  aggregatePaginate: any,
+  deepPopulate: any,
+}
 
 export interface IDoc extends mongoose.Document {
-  _original?: any;
-  wasNew: boolean,
-  _id: mongoose.ObjectId,
-  id: string,
-
+  createdById?: mongoose.ObjectId,
   createdAt: Date,
-  createdById?: mongoose.ObjectId;
+
+  updatedById?: mongoose.ObjectId,
   updatedAt?: Date,
-  updatedById?: mongoose.ObjectId;
+
+  deletedById?: mongoose.ObjectId,
   deletedAt?: Date,
-  deletedById?: mongoose.ObjectId;
 
   toJSON: any,
   toObject: any,
+  aggregate: any,
   aggregatePaginate: any,
+  deepPopulate: any,
 }
 
-export interface IUserDoc extends IDoc {
-  userId: string,//1
-  company: any, //2
-
-  name: string,//admin,
-  surname: string,//admin,
-  userName: string,//admin,
-  emailAddress: string,//admin@aspnetzero.com,
-  phoneNumber: string | null,//null,
-  profilePictureId: string | null,//null,
-  isActive: boolean,//true,
-  creationTime: Date,//2021-07-24T17:53:09.752915,
-  // isEmailConfirmed: boolean,// true,
-  // roles: [
-  //     {
-  //         roleId: 1,
-  //         roleName: Admin
-  //     }
-  // ],
-}
-
-export interface ICompanyDoc extends IDoc {
-  tenancyId: string,
-  tenancyName: string,
+export interface ISalaryConfigDoc extends IDoc {
+  companyId: mongoose.ObjectId,
   name: string,
-  isActive: boolean,
-  creationTime: Date,
-  // editionDisplayName: string,
-  // connectionString: string,
-  // subscriptionEndDateUtc: Date,
-  // editionId: number,
-  // isInTrialPeriod: boolean,
+  salaryGradeType: SALARY_GRADE_TYPES,
+
+  table_configs: {
+    column_salarygrade_name: string,
+    column_salarygrade_shortname: string,
+    column_factor_name: string,
+    column_lvt_name: string,
+    column_lvt_shortname: string,
+    column_lcb_name: string,
+    column_lcb_shortname: string,
+    column_total_name: string,
+    column_total_shortname: string,
+    column_description_name: string,
+  },
 }
 
-export interface IFolderDoc extends IDoc {
-  companyId: mongoose.ObjectId;
-  name: string;
+export interface ISalaryGradeDoc extends IDoc {
+  salaryConfigId: mongoose.ObjectId,
 
-  parentId?: mongoose.ObjectId;
-}
-
-export interface IAuditLogDoc extends IDoc {
-  auditType: AUDITLOG_TYPES;
-  auditModule: AUDITLOG_LEVELS;
-
-  companyId?: mongoose.ObjectId;
-  folderId?: mongoose.ObjectId;
-  projectId?: mongoose.ObjectId;
-
-  // template: string | IPTemplateModel,
-
-  // projectId?: mongoose.ObjectId;
-  // phaseId?: mongoose.ObjectId;
-  // taskId?: mongoose.ObjectId;
-  // subtaskId?: mongoose.ObjectId;
-  // commentId?: mongoose.ObjectId;
-  company?: ICompanyDoc;
-  folder?: IFolderDoc;
-  project?: IFolderDoc;
-
-  data?: object;
-}
-
-export interface IProjectDoc extends IDoc {
-  companyId: mongoose.ObjectId;
-  folderId?: mongoose.ObjectId;
+  basicSalaryType: BASIC_SALARY_TYPES, //lương tối thiểu vùng / lương khởi điểm
+  basicSalaryValue: number, // giá trị lương cơ sở
 
   name: string,
-  description: string,
+  position: number,
 
-  company?: ICompanyDoc;
-  folder?: IFolderDoc;
+  baseFactorType: BASE_FACTOR_TYPES, // vị trí của lương cơ sở : giữa / bắt đầu
+  baseFactorValue: number, // hệ số của lương cơ sở
+  baseJumpFactor: number;
 
-  fields_inc: object;
+  percentLcb: number;
+  percentKpi: number;
+
+  useBaseJumpFactor: boolean;
+
+  prefixGrade: string, //tiền tố row con
 }
 
-export interface IPhaseDoc extends IDoc {
-  name: string,
+export interface ISalaryLevelDoc extends IDoc {
+  salaryGradeId: mongoose.ObjectId,
+  position: number,
+  jumpFactor: number;
+  factor: number,
+  isBaseFactor: boolean;
 
-  companyId: mongoose.ObjectId;
-  projectId: mongoose.ObjectId;
-  taskId: mongoose.ObjectId;
+  percentLcb: number;
+  percentKpi: number;
+}
+
+export interface IConfigTableDoc extends IDoc {
+  companyId: mongoose.Types.ObjectId,
+  tableKey: string,
+  configs: [{
+    columKey: string,
+    length: number,
+  }],
+}
+
+export interface IPlanSaleDoc extends IDoc {
+  companyId: mongoose.Types.ObjectId,
+  productGroupId: mongoose.Schema.Types.ObjectId,
+  value: number,
+}
+
+export interface ISalePlanDetailDoc extends IDoc {
+  companyId: mongoose.Types.ObjectId,
+  salePlanId: mongoose.Types.ObjectId,
+  salePlanModel: string,
+}
+export interface ICoreConfigDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  organizationalModel: ORGANIZATIONAL_MODAL
+}
+export interface IDepartmentDoc extends IDoc {
+  name: string,
+  parentId: mongoose.ObjectId,
+  backgroundColor: string,
+  companyId: mongoose.ObjectId,
+  isSystem: boolean,
+  systemType: string,
+  allowDeletion: boolean,
+  systemSort: number,
+  color: string;
+
+  //popuplate
+  childrens: IDepartmentDoc[],
+  personnelPositions: IPersonnelPositionDoc[]
+}
+
+export interface IAccountabilityDoc extends IDoc {
+  name: mongoose.ObjectId,
+  dutyId: mongoose.ObjectId,
+
+  departmentId: mongoose.ObjectId,
+  personnelPositionId: mongoose.ObjectId,
+
+  mandates: {
+    personnelPositionId: mongoose.ObjectId,
+    mandateKey: MANDATE_KEY[],
+  }[],
+
+  work: {
+    valueChainId: mongoose.ObjectId,
+    businessProcessId?: mongoose.ObjectId,
+    segmentId?: mongoose.ObjectId,
+    workIds: mongoose.ObjectId[],
+  }
+
+  attachments?: mongoose.ObjectId[],
+}
+
+export interface IAccountSegmentDoc extends IDoc {
+  accountabilityId: mongoose.ObjectId,
+  workInsegmentIds: any[],
+  segmentId: mongoose.ObjectId,
+  businessProcessId: mongoose.ObjectId,
+}
+
+export interface IDutyDoc extends IDoc {
+  name: string,
+  companyId: mongoose.ObjectId,
+  departmentId: mongoose.ObjectId,
+}
+
+export interface IMandatesStoreDoc extends IDoc {
+  name: string,
+  companyId: mongoose.ObjectId,
+}
+
+export interface IMandatesDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  name: string,
+  mandateKey: BASE_FACTOR_TYPES,
+}
+
+export interface IValueChainDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+
+  name: string,
+  // position: number,
+}
+
+export interface IBusinessProcessDoc extends IDoc {
+  valueChainId: mongoose.ObjectId,
+  backgroundColor: string,
+  name: string,
+  position: number,
+}
+
+export interface ISegmentDoc extends IDoc {
+  valueChainId: mongoose.ObjectId,
+  businessProcessId: mongoose.ObjectId,
+  name: string,
+  backgroundColor: string,
+  position: number,
+}
+
+export interface IWorkInSegmentDoc extends IDoc {
+  name: string,
+  backgroundColor: string,
+  companyId: mongoose.ObjectId,
+  segmentId: mongoose.ObjectId,
+  departmentId: mongoose.ObjectId,
+  position: number,
+}
+
+export interface IAllowanceDoc extends IDoc {
+  salaryConfigId: mongoose.ObjectId,
+  salaryGradeId: mongoose.ObjectId,
+
+  fieldKey: string,
+
+  name: string,
+  shortName: string,
+  shortNameTemp: string,
+
+  useValueConstant: boolean,
+  valueConstant: number,
+  valueFormula: {
+    argument: TARGET_FORMULA_ALLOWANCE,
+    percent: number
+  },
 
   position: number,
-  description?: string,
-
-  project: IProjectDoc
 }
 
-export interface IRoleDoc extends IDoc {
+export interface IRCPValueDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  year: string,
+
+  monthly_factor: {
+    month_1: number;
+    month_2: number;
+    month_3: number;
+    month_4: number;
+    month_5: number;
+    month_6: number;
+    month_7: number;
+    month_8: number;
+    month_9: number;
+    month_10: number;
+    month_11: number;
+    month_12: number;
+  }
+
+  netRevenue: number,
+}
+
+export interface IRCPDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  year: number,
+
   name: string,
 
-  permissions: PERMISSIONS[],
-  projectId: mongoose.ObjectId;
+  itemType: RCP_TYPES,
+  natueCost: NATUE_OF_COST_TYPES, // bien phi / dinh phi
+
+  percent: number, // dành cho biến phí
+  value: number, // dành cho định phí
+
+  parentId: mongoose.ObjectId,
+}
+export interface IRCPSplitUpDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  rcpId: mongoose.ObjectId,
+
+  splitUpKey: BSC_ENTIRY_ON_MODEL,
+  splitUpModel: SPLITUP_ON_MODEL,
+  splitUpId: mongoose.ObjectId,
+  splitByMonth: MONTH_KEY,
+
+  value: number, // dành cho định phí
 }
 
-export interface IGroupWorkDoc extends IDoc {
+export interface IRCPByStageDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  rcpId: mongoose.ObjectId,
+
+  stage: number, // 1 || 2 || 3 || 4
+  value: number,
+}
+
+export interface IRCPByMonthDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  rcpId: mongoose.ObjectId,
+  stage: number,
+
+  month: number, // 1 => 12
+  value: number,
+}
+
+export interface IMasterProcessDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+
+  parentId: mongoose.ObjectId,
+  processType: PROCESS_TYPES,
+
+  departmentId: mongoose.ObjectId,
+  personnelPositionId: mongoose.ObjectId,
+
+  startAt: string,
+  endAt: string,
+  duration: number,
+
+  procedure: string,
+
   name: string,
-
-  memberIds: mongoose.ObjectId[],
-  projectId: mongoose.ObjectId;
 }
 
-export interface IMemberRoleDoc extends IDoc {
-  projectId: mongoose.ObjectId;
-  roleId: mongoose.ObjectId;
-  userId: mongoose.ObjectId,
-  groupWorkId: mongoose.ObjectId;
-  roles?: any
-}
+export interface IProductGroupDoc extends IDoc {
+  companyId: mongoose.ObjectId,
 
-export interface IUsersDoc extends IDoc {
-  _id: mongoose.ObjectId,
-  userId: string,
-  company: any,
+  position: number,
+  image: string,
+  itemGroupCode: string,
   name: string,
-  surname: string,
-  userName: string,
-  emailAddress: string,
-  phoneNumber: string | null,
-  profilePictureId: string | null,
+  description: string,
   isActive: boolean,
-  creationTime: Date,
+  isPublic: IS_PUBLIC,
+  typeLabel: TYPES_OF_LABEL
 }
 
-export interface IFieldDoc extends IDoc {
-  _id: mongoose.ObjectId,
-  entityId: mongoose.ObjectId,
-  onModel: string,
-  fieldKey: string,
-  fieldName: string,
-  fieldType: PFieldType,
-  isFieldSystem: Boolean,
-
-  fieldConfigs?: object,
-}
-
-export interface ITaskDoc extends IDoc {
-  _id: mongoose.ObjectId,
-  phaseId: mongoose.ObjectId,
-  projectId: mongoose.ObjectId,
-  value: object,
+export interface ILocationDoc {
   name: string,
+  type: LOCATION_TYPES,
+  parent: mongoose.ObjectId,
+  minWage: number,
 }
 
+export interface IHashtagDoc {
+  companyId: mongoose.ObjectId,
+
+  name: string,
+  data: any,
+  target: HASHTAG_TYPES,
+}
+
+export interface IProductCategoryDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+
+  position: number,
+  image: string,
+  itemGroupCode: string,
+  name: string,
+  unit: string,
+  importPrice: number,
+  sellingPrice: number,
+  tax: number,
+  isPublic: IS_PUBLIC,
+}
+export interface IMaterialsSpareDoc extends IDoc {
+  position: number,
+  productGroupCode: string,
+  companyId: mongoose.ObjectId,
+  commodityCode: string,
+  image: string,
+  name: string,
+  unit: string,
+  conversionUnit1: {
+    name: string,
+    rate: number
+  },
+  conversionUnit2: {
+    name: string,
+    rate: number
+  },
+  conversionUnit3: {
+    name: string,
+    rate: number
+  },
+  isActive: boolean,
+
+  purchasePrice: number,
+  retailPrice: number,
+  wholesalePrice: number,
+  otherPrice: number,
+
+  tax: number,
+  otherTax: number,
+
+  category: string, // phan loai
+  quantitative: number, // Định lượng
+  grade: string, // Phẩm cấp
+  packingSpecification: string,// Quy cách đóng gói,
+  origin: string,
+  dueDate: string,
+  isPublic: IS_PUBLIC,
+}
+export interface IServicesDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+
+  position: number,
+  image: string,
+  itemGroupCode: string,
+  name: string,
+  unit: string,
+  importPrice: number,
+  sellingPrice: number,
+  tax: number,
+  isPublic: IS_PUBLIC,
+}
+
+export interface ICommodityListDoc extends IDoc {
+  position: number,
+  productGroupCode: string,
+  companyId: mongoose.ObjectId,
+  commodityCode: string,
+  image: string,
+  name: string,
+  unit: string,
+  conversionUnit1: {
+    name: string,
+    rate: number
+  },
+  conversionUnit2: {
+    name: string,
+    rate: number
+  },
+  conversionUnit3: {
+    name: string,
+    rate: number
+  },
+  isActive: boolean,
+
+  purchasePrice: number,
+  retailPrice: number,
+  wholesalePrice: number,
+  otherPrice: number,
+
+  tax: number,
+  otherTax: number,
+
+  category: string, // phan loai
+  quantitative: number, // Định lượng
+  grade: string, // Phẩm cấp
+  packingSpecification: string,// Quy cách đóng gói,
+  origin: string,
+  dueDate: string,
+  isPublic: IS_PUBLIC,
+}
+
+export interface IObjectListDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+
+  position: number,
+  itemObjectCode: string,
+  Taxcode: number
+  image: string,
+
+  name: string,
+  category: string,
+  mxh: string,
+  phone: number,
+  email: string,
+  web: string,
+  address: string,
+  bankAccount: number,
+  bankName: string,
+  representativeId: mongoose.ObjectId,
+  tradersId: mongoose.ObjectId,
+  CreditLimit: number,
+  CreditAgeLimit: string,
+  description: string,
+  isPublic: IS_PUBLIC,
+}
+export interface IObjectUserDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  position: number,
+  image: string,
+  name: string,
+  phone: number,
+  cccd: number,
+  email: string,
+  address: string,
+  rank: string,
+  responsibility: string,
+
+}
+export interface IChannelDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  position: number,
+  name: string,
+  channelCode: string,
+  picId: mongoose.ObjectId,
+  remarks: string,
+}
+export interface IBaseUnitDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  position: number,
+  name: string,
+  baseUnitCode: string,
+  picId: mongoose.ObjectId,
+  remarks: string,
+}
+export interface IBscDetailDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  bscCategoryKey: mongoose.ObjectId,
+  targetId: mongoose.ObjectId,
+
+  position: number,
+
+  splitUpKey: BSC_ENTIRY_ON_MODEL,
+  splitUpId: mongoose.ObjectId,
+  splitUpModel: SPLITUP_ON_MODEL,
+  splitByMonth: MONTH_KEY,
+
+  unit: string,
+  manageById: TABLE_CORE_BSC_TARGETDETAIL_MANAGEBY,
+  value: number,
+  period: string,
+  chargeBy: string,
+  plan: string,
+  note: string,
+}
+
+export interface IselectListDoc extends IDoc {
+  companyId: mongoose.ObjectId,
+  position: number,
+  type: string,
+  isSystem: boolean,
+  title_default: string,
+  title_custom: string,
+}
+
+export interface IDivergenceDoc {
+  companyId: mongoose.ObjectId,
+  name: string,
+  divergenceKey: MONTH_KEY,
+}

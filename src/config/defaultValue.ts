@@ -1,0 +1,2 @@
+export const DEFAULT_SALARY_PREFIXGRADE = "B";
+export const DEFAULT_JUMP_FACTOR = 0.25;

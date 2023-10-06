@@ -1,8 +1,7 @@
-export default class ApiError extends Error {
+class ApiError extends Error {
   statusCode: any;
   isOperational: boolean;
-  
-  constructor(statusCode: number, message: string, isOperational = true, stack = '') {
+  constructor(statusCode: any, message: string | undefined, isOperational = true, stack = '') {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
@@ -13,3 +12,5 @@ export default class ApiError extends Error {
     }
   }
 }
+
+export default ApiError;

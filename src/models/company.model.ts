@@ -1,14 +1,13 @@
-import mongoose, { Model } from 'mongoose';
-import { TABLE_COMPANY } from '../config';
-import { ICompanyDoc, IModel } from '../types';
+import mongoose from 'mongoose';
+import { TABLE_COMPANY } from '../config/table';
+import { ICompanyDoc } from '../types';
+import { toJSONPlugin } from './plugins';
 mongoose.Promise = require('bluebird');
-import { toJSON, paginate } from './plugins';
 
-// 2. Create a Schema corresponding to the document interface.
-// const CompanyModelSchema = new Schema<CompanyModelDoc>({
+interface CompanyModelDoc extends ICompanyDoc, mongoose.Document { }
+type CompanyModelInterface = mongoose.Model<CompanyModelDoc>
 
-export interface CompanyModelDoc extends IModel<ICompanyDoc> { }
-const companySchema = new mongoose.Schema<ICompanyDoc, Model<ICompanyDoc>>({
+const companySchema = new mongoose.Schema<CompanyModelDoc>({
   tenancyId: String, //2
   tenancyName: String, //Biso24,
   name: String, //Công ty thương mại,
@@ -21,9 +20,84 @@ const companySchema = new mongoose.Schema<ICompanyDoc, Model<ICompanyDoc>>({
   // subscriptionEndDateUtc: null,
   // editionId: string, //1,
   // isInTrialPeriod: false,
-});
-// add plugin that converts mongoose to json
-companySchema.plugin(toJSON);
-companySchema.plugin(paginate);
 
-export const Company = mongoose.model<ICompanyDoc, CompanyModelDoc>(TABLE_COMPANY, companySchema);
+  salaryConfigs: {
+    useStartingSalary: Boolean,
+    regionBased: {
+      type: [{
+        provinceId: mongoose.Schema.Types.ObjectId,
+        districtId: mongoose.Schema.Types.ObjectId,
+        minimum: Number,
+        applyTo: String,
+      }],
+      default: []
+    },
+  },
+  insurances: {
+    socialInsurance: {
+      companyPaid: {
+        type: Number, default: 30
+      },
+      employeePaid: {
+        type: Number, default: 10
+      },
+    },
+    healthInsurance: {
+      companyPaid: {
+        type: Number, default: 30
+      },
+      employeePaid: {
+        type: Number, default: 10
+      },
+    },
+    unemploymentInsurance: {
+      companyPaid: {
+        type: Number, default: 30
+      },
+      employeePaid: {
+        type: Number, default: 10
+      },
+    },
+    accidentInsurance: {
+      companyPaid: {
+        type: Number, default: 30
+      },
+      employeePaid: {
+        type: Number, default: 10
+      },
+    },
+  }
+},
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  });
+// add plugin that converts mongoose to json
+companySchema.plugin(toJSONPlugin);
+
+companySchema.virtual('insurances.socialInsurance.total')
+  .get(function () {
+    return this.insurances.socialInsurance.companyPaid
+      + this.insurances.socialInsurance.employeePaid
+  })
+
+companySchema.virtual('insurances.healthInsurance.total')
+  .get(function () {
+    return this.insurances.healthInsurance.companyPaid
+      + this.insurances.healthInsurance.employeePaid
+  })
+
+companySchema.virtual('insurances.unemploymentInsurance.total')
+  .get(function () {
+    return this.insurances.unemploymentInsurance.companyPaid
+      + this.insurances.unemploymentInsurance.employeePaid
+  })
+
+companySchema.virtual('insurances.accidentInsurance.total')
+  .get(function () {
+    return this.insurances.accidentInsurance.companyPaid
+      + this.insurances.accidentInsurance.employeePaid
+  })
+
+const CompanyModel = mongoose.model<CompanyModelDoc, CompanyModelInterface>(TABLE_COMPANY, companySchema)
+export { CompanyModel, CompanyModelDoc }
